@@ -115,6 +115,20 @@ function getNow() {
   return window.performance.now();
 }
 
+function waitForNextVideoFrame() {
+  return new Promise<void>((resolve) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(fallback);
+      resolve();
+    };
+    const fallback = window.setTimeout(finish, 80);
+    window.requestAnimationFrame(finish);
+  });
+}
+
 export default function Home() {
   const [script, setScript] = useState(DEFAULT_SCRIPT);
   const [style, setStyle] = useState("documentary");
@@ -255,7 +269,7 @@ export default function Home() {
         const elapsed = getNow() - sceneStart;
         drawVideoFrame(context, scene, elapsed / sceneLength, index);
         setExportProgress(Math.min(99, Math.round(((index + elapsed / sceneLength) / project.scenes.length) * 100)));
-        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+        await waitForNextVideoFrame();
       }
     }
 
